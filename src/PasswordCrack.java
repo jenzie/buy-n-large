@@ -17,34 +17,54 @@ import java.security.NoSuchAlgorithmException;
 
 public class PasswordCrack {
 
-    public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest md = MessageDigest.getInstance ("SHA-256");
+    public static void main(String[] args) {
         String password = "12345";
-        byte[] data = password.getBytes ("UTF-8");
-        for (int i = 0; i < 100000; i++) {
-            md.update (data);
-            data = md.digest();
+        byte[] data = getHash(password);
+        String hexString = byteArrayToHexString(data);
+
+        System.out.println(hexString);
+        System.out.println("ca6323767829ee7075655b283e14f2da9353006474779127b595e6d991fffe3f");
+    }
+    
+    private static byte[] getHash(String data) {
+        MessageDigest messageDigest = null;
+        byte[] result = new byte[0];
+
+        try {
+            messageDigest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
-        StringBuffer hexString = new StringBuffer();
-        for (int i=0;i<data.length;i++) {
-            //hexString.append(Integer.toHexString(0xFF & data[i]));
-            String hex = Integer.toHexString(0xFF & data[i]);
-            if (hex.length() == 1) {
-                // could use a for loop, but we're only dealing with a single byte
-                hexString.append('0');
+
+        try {
+            result = data.getBytes("UTF-8");
+
+            // Hash 100k times.
+            for (int i = 0; i < 100000; i++) {
+                if (messageDigest != null) {
+                    messageDigest.update(result);
+                    result = messageDigest.digest();
+                }
             }
-            hexString.append(hex);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
-        System.out.println(hexString.toString());
+
+        return result;
     }
 
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for ( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[j] & 0xFF;
-            //hexChars[j * 2] = hexArray[v >>> 4];
-            //hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+    private static String byteArrayToHexString(byte[] data) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte piece : data) {
+            // Convert each byte to hex, while ANDing with 0xFF to get the least significant byte (masking).
+            String hex = Integer.toHexString(0xFF & piece);
+
+            // Check each byte for missing leading zeroes.
+            if (hex.length() == 1)
+                hexString.append('0');
+
+            hexString.append(hex);
         }
-        return new String(hexChars);
+        return hexString.toString();
     }
 }
