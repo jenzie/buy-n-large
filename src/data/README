@@ -1,0 +1,46 @@
+Important files:
+
+	README		this file
+
+	RUN		a shellscript for testing your program
+
+	args.?		command-line arguments for test #?
+	db.?		password hash database for test #?
+	dict.?		password dictionary for test #?
+	stdout.?	stdout for test #?
+	stderr.?	stderr for test #?
+
+If you are doing your development somewhere other than on a CS system,
+be sure that you are using JDK7, and be sure to allow yourself adequate
+time to test your program on our Ubuntu systems.
+
+To run your program against one of these test data sets, run one of the
+following commands.  For Bash/sh users (e.g., using test #3):
+	
+	java PasswordCrack dict.3 db.3 > out 2> err
+
+You can use the args.3 file this way:
+	
+	java PasswordCrack `cat args.3` > out 2> err
+
+Those are grave accents (sometimes called "back quotes"), not apostrophes,
+in that command; they tell the shell to insert the results from executing
+that command (in this example, "cat args.3") at that point on the command
+you're typing in.
+
+For Csh users (note the parentheses):
+
+	(java PasswordCrack dict.3 db.3 > out) >& err
+	(java PasswordCrack `cat args.3` > out) >& err
+
+The RUN script automatically tests your program against all the supplied
+data sets, saving your output into files named out.? and err.? for
+each test.  It then uses the 'cmp' command to tell you which output
+files have differences from the sample output; you can go on to use
+'diff' to see these differences in detail.
+
+Any differences between your output and the test output should be
+corrected before submitting your program.
+
+NOTE:  These test files test only some of the program's functionality!
+Be sure to exhaustively test your solution.

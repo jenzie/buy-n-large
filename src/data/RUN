@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# run the PasswordCrack program for all test sets
+#
+# produces the following result files:
+#
+#       out.N           standard output from test #N
+#       err.N           standard error output from test #N
+#
+
+n=1
+while [ -f args.$n ]
+do
+	rm -f out.$n err.$n
+	args="`cat args.$n`"
+	echo "java PasswordCrack $args"
+	java PasswordCrack $args > out.$n 2> err.$n
+	cmp stdout.$n out.$n
+	cmp stderr.$n err.$n
+	n=`expr $n + 1`
+done
