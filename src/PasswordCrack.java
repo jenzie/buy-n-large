@@ -12,8 +12,6 @@
  */
 
 import java.io.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -30,12 +28,20 @@ public class PasswordCrack {
         ArrayList<String> dictionary = passwordCrack.parseDictionary(args[0]);
         HashMap<String, String> database = passwordCrack.parseDatabase(args[1]);
 
+        Hasher hashMaker = new Hasher();
+
+        ArrayList<String> hashDictionary = hashMaker.plaintextToHash(dictionary);
+
+        Matcher matchMaker = new Matcher();
+
+        /*
         String password = "12345";
         byte[] data = getHash(password);
         String hexString = byteArrayToHexString(data);
 
         System.out.println(hexString);
         System.out.println("ca6323767829ee7075655b283e14f2da9353006474779127b595e6d991fffe3f");
+        */
     }
 
     private ArrayList<String> parseDictionary(String dictFile) {
@@ -92,47 +98,5 @@ public class PasswordCrack {
                             "Error: File " + dbFile + " is empty.");
             return null;
         }
-    }
-
-    private static byte[] getHash(String data) {
-        MessageDigest messageDigest = null;
-        byte[] result = new byte[0];
-
-        try {
-            messageDigest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            result = data.getBytes("UTF-8");
-
-            // Hash 100k times.
-            for (int i = 0; i < 100000; i++) {
-                if (messageDigest != null) {
-                    messageDigest.update(result);
-                    result = messageDigest.digest();
-                }
-            }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        return result;
-    }
-
-    private static String byteArrayToHexString(byte[] data) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte piece : data) {
-            // Convert each byte to hex, while ANDing with 0xFF to get the least significant byte (masking).
-            String hex = Integer.toHexString(0xFF & piece);
-
-            // Check each byte for missing leading zeroes.
-            if (hex.length() == 1)
-                hexString.append('0');
-
-            hexString.append(hex);
-        }
-        return hexString.toString();
     }
 }
