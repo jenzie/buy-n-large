@@ -7,8 +7,6 @@
  http://www.cs.rit.edu/~wrc/courses/csci251/projects/1/
  */
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Matcher implements Runnable {
@@ -35,15 +33,4 @@ public class Matcher implements Runnable {
             }
         }
     }
-
-    /*
-    public String getMatch(String hash, HashMap<String, String> database) {
-        if (database.containsValue(hash)) {
-            for (Map.Entry<String, String> entry : database.entrySet()) {
-                if(hash.equals(entry.getValue()))
-                    return entry.getKey();
-            }
-        }
-        return null;
-    }*/
 }

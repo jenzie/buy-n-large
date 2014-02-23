@@ -10,8 +10,6 @@
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Hasher implements Runnable {
@@ -22,13 +20,6 @@ public class Hasher implements Runnable {
     public Hasher(String plaintextData, ConcurrentHashMap<String, String> dictionaryOfPasswords) {
         this.plaintextData = plaintextData;
         this.dictionaryOfPasswords = dictionaryOfPasswords;
-    }
-
-    public Hashtable<String, String> plaintextToHash(ArrayList<String> plaintextData) {
-        Hashtable<String, String> hashData = new Hashtable<String, String>();
-        for(String entry : plaintextData)
-            hashData.put(entry, byteArrayToHexString(getHash(entry)));
-        return hashData;
     }
 
     private byte[] getHash(String data) {
