@@ -1,6 +1,3 @@
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  author: Jenny Zhen
  date: 02.20.14
@@ -9,6 +6,9 @@ import java.util.Map;
  assignment: BuyNLarge
  http://www.cs.rit.edu/~wrc/courses/csci251/projects/1/
  */
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Matcher {
     public String getMatch(String hash, HashMap<String, String> database) {

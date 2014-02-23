@@ -1,9 +1,3 @@
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-
 /**
  author: Jenny Zhen
  date: 02.20.14
@@ -12,6 +6,12 @@ import java.util.Hashtable;
  assignment: BuyNLarge
  http://www.cs.rit.edu/~wrc/courses/csci251/projects/1/
  */
+
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Hashtable;
 
 public class Hasher {
     public Hashtable<String, String> plaintextToHash(ArrayList<String> plaintextData) {
