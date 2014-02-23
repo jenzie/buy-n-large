@@ -14,6 +14,8 @@
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
 
 public class PasswordCrack {
     public static void main(String[] args) {
@@ -30,9 +32,15 @@ public class PasswordCrack {
 
         Hasher hashMaker = new Hasher();
 
-        ArrayList<String> hashDictionary = hashMaker.plaintextToHash(dictionary);
+        Hashtable<String, String> hashDictionary = hashMaker.plaintextToHash(dictionary);
+        for(Map.Entry<String, String> entry :hashDictionary.entrySet())
+            System.out.println(entry.getKey() + " " + entry.getValue());
 
         Matcher matchMaker = new Matcher();
+
+        /**
+         * For each user read in, make a thread. Then, after all users, for each unhashed password read in, make a thread.
+         */
 
         /*
         String password = "12345";
