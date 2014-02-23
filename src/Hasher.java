@@ -29,7 +29,9 @@ public class Hasher implements Runnable {
      * Constructor.
      * @param plaintextData password to hash.
      * @param dictionaryOfPasswords collection of hashed passwords, along with their corresponding plaintext values.
-     * @param hashesDone
+     * @param hashesDone semaphore that keeps track of the number of passwords that were hashed.
+     *                   Used along with the semaphore printPermits to allow/block threads from printing results.
+     *                   Used to maintain order of task execution.
      */
     public Hasher(String plaintextData, ConcurrentHashMap<String, String> dictionaryOfPasswords, Semaphore hashesDone) {
         this.plaintextData = plaintextData;
