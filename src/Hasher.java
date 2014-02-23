@@ -11,6 +11,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 /**
  * Hasher takes in a plaintext password and converts it into a byte array after using SHA-256 to hash. The byte array
@@ -22,15 +23,18 @@ public class Hasher implements Runnable {
     private String plaintextData;
     private String hashData;
     private ConcurrentHashMap<String, String> dictionaryOfPasswords;
+    private Semaphore hashesDone;
 
     /**
      * Constructor.
      * @param plaintextData password to hash.
      * @param dictionaryOfPasswords collection of hashed passwords, along with their corresponding plaintext values.
+     * @param hashesDone
      */
-    public Hasher(String plaintextData, ConcurrentHashMap<String, String> dictionaryOfPasswords) {
+    public Hasher(String plaintextData, ConcurrentHashMap<String, String> dictionaryOfPasswords, Semaphore hashesDone) {
         this.plaintextData = plaintextData;
         this.dictionaryOfPasswords = dictionaryOfPasswords;
+        this.hashesDone = hashesDone;
     }
 
     /**
@@ -95,5 +99,8 @@ public class Hasher implements Runnable {
     public void run() {
         this.hashData = byteArrayToHexString(getHash(this.plaintextData));
         this.dictionaryOfPasswords.put(this.hashData, this.plaintextData);
+
+        // Update the semaphore by releasing one, which increases the number of available permits by one.
+        this.hashesDone.release();
     }
 }

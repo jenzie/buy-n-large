@@ -14,6 +14,7 @@
 import java.io.*;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 /**
  * PasswordCrack cracks the passwords of users in a database file that is read in, along with a dictionary file
@@ -44,6 +45,16 @@ public class PasswordCrack {
         ConcurrentHashMap<String, String> dictionaryOfPasswords = new ConcurrentHashMap<String, String>();
         LinkedList<Matcher> matcherList = new LinkedList<Matcher>();
 
+        // Initialize these semaphores with zero, since there are currently no permits. And we cannot acquire() until
+        // we have permits. We acquire only because we want to block until all passwords have been hashed. When all
+        // passwords have been hashed. then we grant the number of permits available.
+        Semaphore hashesDone = new Semaphore(0);
+        Semaphore printPermits = new Semaphore(0);
+
+        // Keep track of count to ensure all users along with their plaintext passwords are printed once.
+        int passwordsRead = 0;
+        int usersRead = 0;
+
         // Read in the database file containing all users and their hashed passwords.
         try {
             BufferedReader reader = new BufferedReader(new FileReader(dbFile));
@@ -55,10 +66,11 @@ public class PasswordCrack {
                 // Check for a user, password pair.
                 if (entry.length == 2) {
                     // Create a new Matcher for each user/password combination.
-                    Matcher current = new Matcher(entry[0], entry[1], dictionaryOfPasswords, matcherList);
+                    Matcher current = new Matcher(entry[0], entry[1], dictionaryOfPasswords, matcherList, printPermits);
                     Thread newThread = new Thread(current);
                     matcherList.add(current);
                     newThread.start();
+                    usersRead++;
                 }
 
                 line = reader.readLine();
@@ -82,8 +94,9 @@ public class PasswordCrack {
                 // Check for a user, password pair.
                 if (!line.isEmpty()) {
                     // Create a new Hasher to hash the plaintext values.
-                    Thread newThread = new Thread(new Hasher(line, dictionaryOfPasswords));
+                    Thread newThread = new Thread(new Hasher(line, dictionaryOfPasswords, hashesDone));
                     newThread.start();
+                    passwordsRead++;
                 }
 
                 line = reader.readLine();
@@ -97,5 +110,14 @@ public class PasswordCrack {
                     "Usage: java PasswordCrack dictionary db\n" +
                     "Error: File " + dictFile + " is empty.");
         }
+
+        // Block main() forever until all passwords have been hashed.
+        try {
+            hashesDone.acquire(passwordsRead);
+        } catch (InterruptedException e) {
+            System.err.println("Error: Program encountered an unexpected exception.");
+        }
+
+        printPermits.release(usersRead);
     }
 }

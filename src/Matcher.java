@@ -9,6 +9,7 @@
 
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 /**
  * Matcher takes in the name of a user and its hashed password, and searches the dictionary of potential passwords
@@ -21,19 +22,22 @@ public class Matcher implements Runnable {
     private String password;
     private ConcurrentHashMap<String, String> dictionaryOfPasswords;
     private LinkedList<Matcher> matcherList;
+    private Semaphore printPermits;
 
     /**
      * Constructor.
      * @param user name of the user that Matcher is trying to match the password of.
      * @param password hashed value of the user's password.
      * @param dictionaryOfPasswords collection of hashed passwords, along with their corresponding plaintext values.
+     * @param printPermits
      */
     public Matcher(String user, String password, ConcurrentHashMap<String,
-            String> dictionaryOfPasswords, LinkedList<Matcher> matcherList){
+            String> dictionaryOfPasswords, LinkedList<Matcher> matcherList, Semaphore printPermits){
         this.user = user;
         this.password = password;
         this.dictionaryOfPasswords = dictionaryOfPasswords;
         this.matcherList = matcherList;
+        this.printPermits = printPermits;
     }
 
     /**
@@ -50,7 +54,8 @@ public class Matcher implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if (this.dictionaryOfPasswords.containsKey(this.password))
+            // Break if we have found the password, or if all passwords have been read in and hashed.
+            if (this.dictionaryOfPasswords.containsKey(this.password) || this.printPermits.availablePermits() > 0)
                 break;
             else
                 // Since no matches were found, let other threads use the time that this thread has to check.
@@ -58,12 +63,12 @@ public class Matcher implements Runnable {
         }
 
         // Wait until we're back at the head of the list before printing, so we maintain task execution order.
-        while (matcherList.peek() != this) {
-            System.out.println("Yielding for user: " + this.user + " head: " + this.matcherList.peekFirst().user);
+        while (matcherList.peek() != this)
             Thread.yield();
-        }
 
-        System.out.println(this.user + " " + this.dictionaryOfPasswords.get(this.password));
+        // Print only the users whose passwords have been found.
+        if (this.dictionaryOfPasswords.get(this.password) != null)
+            System.out.println(this.user + " " + this.dictionaryOfPasswords.get(this.password));
 
         // Remove this thread from the linked list, since we are completely done with it.
         matcherList.pop();
