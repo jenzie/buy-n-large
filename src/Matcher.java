@@ -57,10 +57,15 @@ public class Matcher implements Runnable {
                 Thread.yield();
         }
 
-        while (matcherList.peek() != this)
+        // Wait until we're back at the head of the list before printing, so we maintain task execution order.
+        while (matcherList.peek() != this) {
+            System.out.println("Yielding for user: " + this.user + " head: " + this.matcherList.peekFirst().user);
             Thread.yield();
+        }
 
         System.out.println(this.user + " " + this.dictionaryOfPasswords.get(this.password));
+
+        // Remove this thread from the linked list, since we are completely done with it.
         matcherList.pop();
     }
 }
