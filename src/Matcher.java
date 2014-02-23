@@ -41,7 +41,7 @@ public class Matcher implements Runnable {
      * If it does, it prints out the name of the given user and the matching plaintext password
      * that it found.
      *
-     * If it doesn't, it gives its resources to other threads also trying to match.
+     * If it doesn't, it quits and gives its resources to other threads also trying to match.
      */
     @Override
     public void run() {
