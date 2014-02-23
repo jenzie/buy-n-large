@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PasswordCrack {
     public static void main(String[] args) {
@@ -25,6 +26,10 @@ public class PasswordCrack {
             System.exit(0);
         }
 
+        String dictFile = args[0];
+        String dbFile = args[1];
+
+        /*
         PasswordCrack passwordCrack = new PasswordCrack();
 
         ArrayList<String> dictionary = passwordCrack.parseDictionary(args[0]);
@@ -37,6 +42,57 @@ public class PasswordCrack {
             System.out.println(entry.getKey() + " " + entry.getValue());
 
         Matcher matchMaker = new Matcher();
+        */
+
+        ConcurrentHashMap<String, String> dictionaryOfPasswords = new ConcurrentHashMap<String, String>();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(dbFile));
+            String line = reader.readLine();
+
+            while (line != null) {
+                String[] entry = line.split("\\s+");
+
+                // Check for a user, password pair.
+                if (entry.length == 2) {
+                    Thread newThread = new Thread(new Matcher(entry[0], entry[1], dictionaryOfPasswords));
+                    newThread.start();
+                }
+
+                line = reader.readLine();
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println(
+                    "Usage: java PasswordCrack dictionary db\n" +
+                    "Error: File " + dbFile + " could not be read.");
+        } catch (IOException e) {
+            System.err.println(
+                    "Usage: java PasswordCrack dictionary db\n" +
+                    "Error: File " + dbFile + " is empty.");
+        }
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(dictFile));
+            String line = reader.readLine();
+
+            while (line != null) {
+                // Check for a user, password pair.
+                if (!line.isEmpty()) {
+                    Thread newThread = new Thread(new Hasher(line, dictionaryOfPasswords));
+                    newThread.start();
+                }
+
+                line = reader.readLine();
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println(
+                    "Usage: java PasswordCrack dictionary db\n" +
+                    "Error: File " + dictFile + " could not be read.");
+        } catch (IOException e) {
+            System.err.println(
+                    "Usage: java PasswordCrack dictionary db\n" +
+                    "Error: File " + dictFile + " is empty.");
+        }
 
         /**
          * For each user read in, make a thread. Then, after all users, for each unhashed password read in, make a thread.

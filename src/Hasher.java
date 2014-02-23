@@ -12,8 +12,18 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class Hasher {
+public class Hasher implements Runnable {
+    private String plaintextData;
+    private String hashData;
+    private ConcurrentHashMap<String, String> dictionaryOfPasswords;
+
+    public Hasher(String plaintextData, ConcurrentHashMap<String, String> dictionaryOfPasswords) {
+        this.plaintextData = plaintextData;
+        this.dictionaryOfPasswords = dictionaryOfPasswords;
+    }
+
     public Hashtable<String, String> plaintextToHash(ArrayList<String> plaintextData) {
         Hashtable<String, String> hashData = new Hashtable<String, String>();
         for(String entry : plaintextData)
@@ -61,5 +71,14 @@ public class Hasher {
             hexString.append(hex);
         }
         return hexString.toString();
+    }
+
+    /**
+     * When a thread calls .start(), it runs the .run() method.
+     */
+    @Override
+    public void run() {
+        this.hashData = byteArrayToHexString(getHash(this.plaintextData));
+        this.dictionaryOfPasswords.put(this.hashData, this.plaintextData);
     }
 }
