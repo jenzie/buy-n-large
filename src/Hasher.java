@@ -12,16 +12,32 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Hasher takes in a plaintext password and converts it into a byte array after using SHA-256 to hash. The byte array
+ * is then converted into a hexadecimal string, and stored into the shared dictionary of hashed to plaintext passwords.
+ */
 public class Hasher implements Runnable {
+
+    // Hidden data members.
     private String plaintextData;
     private String hashData;
     private ConcurrentHashMap<String, String> dictionaryOfPasswords;
 
+    /**
+     * Constructor.
+     * @param plaintextData password to hash.
+     * @param dictionaryOfPasswords collection of hashed passwords, along with their corresponding plaintext values.
+     */
     public Hasher(String plaintextData, ConcurrentHashMap<String, String> dictionaryOfPasswords) {
         this.plaintextData = plaintextData;
         this.dictionaryOfPasswords = dictionaryOfPasswords;
     }
 
+    /**
+     * Gets the hashed value of the plaintext password as a byte array.
+     * @param data plaintext password to hash.
+     * @return hashed password as a byte array.
+     */
     private byte[] getHash(String data) {
         MessageDigest messageDigest = null;
         byte[] result = new byte[0];
@@ -49,6 +65,11 @@ public class Hasher implements Runnable {
         return result;
     }
 
+    /**
+     * Converts a hashed byte array into a hexadecimal string.
+     * @param data the byte array to convert into a hexadecimal string.
+     * @return a hexadecimal string representing the byte array given.
+     */
     private String byteArrayToHexString(byte[] data) {
         StringBuilder hexString = new StringBuilder();
         for (byte piece : data) {
@@ -66,6 +87,9 @@ public class Hasher implements Runnable {
 
     /**
      * When a thread calls .start(), it runs the .run() method.
+     *
+     * When this thread is started, it hashes the plaintext password using SHA-256 and adds it into the dictionary
+     * of hashed values to plaintext values.
      */
     @Override
     public void run() {
