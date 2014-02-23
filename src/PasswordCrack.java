@@ -12,6 +12,7 @@
  */
 
 import java.io.*;
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -41,6 +42,7 @@ public class PasswordCrack {
         // Contains the hashed value, plaintext values of the potential passwords.
         // Is shared amongst the Hasher and Matcher.
         ConcurrentHashMap<String, String> dictionaryOfPasswords = new ConcurrentHashMap<String, String>();
+        LinkedList<Matcher> matcherList = new LinkedList<Matcher>();
 
         // Read in the database file containing all users and their hashed passwords.
         try {
@@ -53,7 +55,9 @@ public class PasswordCrack {
                 // Check for a user, password pair.
                 if (entry.length == 2) {
                     // Create a new Matcher for each user/password combination.
-                    Thread newThread = new Thread(new Matcher(entry[0], entry[1], dictionaryOfPasswords));
+                    Matcher current = new Matcher(entry[0], entry[1], dictionaryOfPasswords, matcherList);
+                    Thread newThread = new Thread(current);
+                    matcherList.add(current);
                     newThread.start();
                 }
 

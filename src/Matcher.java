@@ -7,6 +7,7 @@
  http://www.cs.rit.edu/~wrc/courses/csci251/projects/1/
  */
 
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -19,6 +20,7 @@ public class Matcher implements Runnable {
     private String user;
     private String password;
     private ConcurrentHashMap<String, String> dictionaryOfPasswords;
+    private LinkedList<Matcher> matcherList;
 
     /**
      * Constructor.
@@ -26,10 +28,12 @@ public class Matcher implements Runnable {
      * @param password hashed value of the user's password.
      * @param dictionaryOfPasswords collection of hashed passwords, along with their corresponding plaintext values.
      */
-    public Matcher(String user, String password, ConcurrentHashMap<String, String> dictionaryOfPasswords){
+    public Matcher(String user, String password, ConcurrentHashMap<String,
+            String> dictionaryOfPasswords, LinkedList<Matcher> matcherList){
         this.user = user;
         this.password = password;
         this.dictionaryOfPasswords = dictionaryOfPasswords;
+        this.matcherList = matcherList;
     }
 
     /**
@@ -41,19 +45,22 @@ public class Matcher implements Runnable {
      * If it does, it prints out the name of the given user and the matching plaintext password
      * that it found.
      *
-     * If it doesn't, it quits and gives its resources to other threads also trying to match.
+     * If it doesn't, it gives its resources to other threads also trying to match, and then quits when .run() returns.
      */
     @Override
     public void run() {
         while (true) {
-            if (this.dictionaryOfPasswords.containsKey(this.password)) {
-                System.out.println(this.user + " " + this.dictionaryOfPasswords.get(this.password));
+            if (this.dictionaryOfPasswords.containsKey(this.password))
                 break;
-            }
-            else {
+            else
                 // Since no matches were found, let other threads use the time that this thread has to check.
                 Thread.yield();
-            }
         }
+
+        while (matcherList.peek() != this)
+            Thread.yield();
+
+        System.out.println(this.user + " " + this.dictionaryOfPasswords.get(this.password));
+        matcherList.pop();
     }
 }
