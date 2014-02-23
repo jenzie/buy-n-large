@@ -29,7 +29,7 @@ public class Matcher implements Runnable {
      * @param user name of the user that Matcher is trying to match the password of.
      * @param password hashed value of the user's password.
      * @param dictionaryOfPasswords collection of hashed passwords, along with their corresponding plaintext values.
-     * @param printPermits
+     * @param printPermits semaphore that allows/blocks threads from printing users along with the passwords found.
      */
     public Matcher(String user, String password, ConcurrentHashMap<String,
             String> dictionaryOfPasswords, LinkedList<Matcher> matcherList, Semaphore printPermits){
