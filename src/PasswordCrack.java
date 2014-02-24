@@ -29,7 +29,7 @@ public class PasswordCrack {
     public static void main(String[] args) {
         // Check command line arguments.
         if(args.length != 2) {
-            System.err.println("Usage: java PasswordCrack dictionary db");
+            System.err.println("Usage: java PasswordCrack <dictionaryFile> <databaseFile>");
             System.exit(0);
         }
 
