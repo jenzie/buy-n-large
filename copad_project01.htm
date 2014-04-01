@@ -1,0 +1,532 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+            "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>CSCI-251 - Programming Project 1</title>
+  <link rel="stylesheet" type="text/css" href="/~wrc/css/de.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="robots" content="nofollow,noarchive">
+</head>
+<body>
+
+<h1>CSCI-251 - Programming Project 1</h1>
+
+<h2>Due:
+Thursday, February 27, 2014
+
+</h2>
+
+<p>
+<em>
+Last updated
+2014/02/10 12:19:58
+
+</em>
+</p>
+
+<p><em>Update history:</em></p>
+
+<table>
+
+<tr>
+   <td><code>2014/02/10:</code></td>
+   <td><code>initial version</code></td>
+</tr>
+
+</table>
+
+<hr>
+
+<ol>
+<li><a href="#intro">Introduction</a>
+<li><a href="#over">Overview</a>
+<li><a href="#details">Program Requirements</a>
+<li><a href="#files">Supplied Files</a>
+<li><a href="#submit">Turning In Your Solution</a>
+<li><a href="#grading">Grading</a>
+<li><a href="#notes">Notes</a>
+</ol>
+
+<hr>
+
+<a name="intro"></a>
+<h2>1. Introduction</h2>
+
+<p>
+For this assignment, you will write a Java program that uses multiple
+threads.
+The goal of this assignment is to help you learn about thread creation,
+execution, synchronization, and termination.
+</p>
+
+<hr>
+
+<a name="over"></a>
+<h2>2. Overview</h2>
+
+<p>
+Online retailing giant BuyNLarge.com has a large number of users; each
+user has an account on the web site, and each account has a password
+(used to authenticate the user to the web site).
+Here are three of BuyNLarge's users and their passwords:
+</p>
+
+<blockquote><pre>
+kingroland 12345
+obama1     BoTheDog
+camdiaz    moviequeen
+</pre></blockquote>
+
+<p>
+BuyNLarge does not store the plaintext passwords. Instead, BuyNLarge has
+a database of <em>password hashes</em>.
+Here are the users and their password hashes:
+</p>
+
+<blockquote><pre>
+kingroland ca6323767829ee7075655b283e14f2da9353006474779127b595e6d991fffe3f
+obama1     2bdad4fd51e33d44aeba3f8dcfbca33ffa93abb787cd4df628c8750302395121
+camdiaz    ce1071b1fd37d61fdb367ab365605b4d28e743780ed29c9e39447d2a00add17d
+</pre></blockquote>
+
+<p>
+Each password hash is a 64-digit hexadecimal number (a 256-bit number).
+The hash of a password is computed by applying the
+<a href="http://en.wikipedia.org/wiki/SHA-2">SHA256</a>
+hash function to the password, then applying SHA256 to the result, then
+applying SHA256 to the result, and so on until the hash function has been
+applied one hundred thousand times:
+</p>
+
+<blockquote><pre>
+Password hash = SHA256(SHA256(...(SHA256(SHA256(password)))))
+                <em>100000 99999 ...   2      1</em>
+</pre></blockquote>
+
+<p>
+A number of libraries are available which contain code for calculating
+SHA256; for example, here is a Java code fragment for doing this
+computation:
+</p>
+
+<blockquote><pre>
+import java.security.MessageDigest;
+
+MessageDigest md = MessageDigest.getInstance ("SHA-256");
+String password = "12345";
+byte[] data = password.getBytes ("UTF-8");
+md.update (data);
+data = md.digest();
+</pre></blockquote>
+
+<p>
+The <code>update()</code> method applies SHA256 to the data given as its
+parameter and holds the result within the MessageDigest object; the
+<code>digest()</code> method retrieves it.
+To apply SHA256 to that result, simply repeat the last two statements.
+</p>
+
+<p>
+Voldemort, the evil hacker, has broken into BuyNLarge's system
+and stolen the password hash database.
+It's not possible to compute the input of SHA256 given the output,
+so Voldemort can't find the users' passwords
+directly from the password hashes.
+Instead, Voldemort carries out a <em>dictionary attack</em>.
+</p>
+
+<p>
+Voldemort has a <em>dictionary</em>
+containing a large number of potential passwords.
+(Such password dictionaries are readily found on the Internet.)
+Voldemort computes the hash of each potential password in the dictionary.
+Voldemort then compares each password hash in BuyNLarge's database
+with each password hash computed from the dictionary.
+If there is a match, then Voldemort has discovered the password for that
+user.
+</p>
+
+<p>
+For example, one password in the dictionary is <code>12345</code>.
+The hash of that password is
+</p>
+
+<blockquote><pre>
+ca6323767829ee7075655b283e14f2da9353006474779127b595e6d991fffe3f
+</pre></blockquote>
+
+<p>
+According to BuyNLarge's database, the hash of <code>kingroland</code>'s
+password is
+</p>
+
+<blockquote><pre>
+ca6323767829ee7075655b283e14f2da9353006474779127b595e6d991fffe3f
+</pre></blockquote>
+
+<p>
+Therefore, <code>kingroland</code>'s password is <code>12345</code>.
+</p>
+
+<p>
+<em>
+A digression: Technically, Voldemort has discovered a password which
+</em>
+produces the same hash as
+<em>
+the original password; while in theory these two passwords
+</em>
+might
+<em>
+be different, the probability of that is vanishingly small.
+Regardless, because the hashes are identical, either password can be used
+to access the user's account.
+</em>
+</p>
+
+<p>
+You have taken a position as Voldemort's minion, and have been tasked
+with writing a Java program to carry out the dictionary attack.
+The program's inputs are a dictionary file and a password hash database
+file.
+The program's output is a list of users whose passwords were found in the
+dictionary, along with each user's password.
+</p>
+
+<hr>
+
+<a name="details"></a>
+<h2>3. Program Requirements</h2>
+
+<p>
+The following sections describe the operation of your program and the
+implementation method you must follow.
+Grading will be based on how well your submission meets these 
+requirements.
+</p>
+
+<h3>3.1. Performance</h3>
+
+<p>
+Your program will be run with a command of this format:
+</p>
+
+<blockquote><pre>
+java  PasswordCrack  <em>dictionary</em>  <em>db</em>
+</pre></blockquote>
+
+<p>
+where <code><em>dictionary</em></code> is the name of the dictionary
+file, and <code><em>db</em></code> is the name of the password hash
+database file.
+(This means that the program's class must be named
+<code>PasswordCrack</code>, and this class must not be in a package.)
+</p>
+
+<p>
+If the command line does not have the required number of arguments,
+the program must print a usage message on the standard error output
+and must exit.
+The exact wording of the usage message is up to you.
+</p>
+
+<p>
+Your program may make the following assumptions about the dictionary
+file:
+</p>
+
+<ul>
+<li>The file is a plain-text file containing one or more lines
+<li>Each line contains a potential password
+</ul>
+
+<p>
+If the dictionary file violates these assumptions,
+the program's behavior is not specified.
+<em>Note:</em>
+"The program's behavior is not specified" means two things:
+It is up to you to decide what the program will do in this situation,
+and I will not test this situation when grading your project.
+</p>
+
+<p>
+Your program may make the following assumptions about the password hash
+database file:
+</p>
+
+<ul>
+<li>The file is a plain-text file containing one or more lines
+<li>Each line contains a user name and a password hash (as a 64-character
+hexadecimal string)
+<li>The name and hash fields are separate by one or more whitespace
+(blank and/or tab) characters
+</ul>
+
+<p>
+Again, if the password hash database file violates these assumptions,
+the program's behavior is not specified.
+</p>
+
+<p>
+The output from your program must match the following formatting
+requirements exactly:
+</p>
+
+<ul>
+<li>Each line of the standard output contains the results for exactly one
+user
+<li>The users must appear in the standard output in the order in which
+they appear in the password hash database.
+</ul>
+
+<h3>3.2. Design</h3>
+
+<p>
+Your implementation must consist of multiple threads organized into two
+groups:
+</p>
+
+<ul>
+
+<li>
+<p>
+<em>Group 1</em> threads each compute the password hash of a different
+password in the dictionary, one password per thread.
+</p>
+
+<li>
+<p>
+<em>Group 2</em> threads each match a single user from the password hash
+database against all the dictionary password hashes.
+</p>
+
+</ul>
+
+<p>
+The main program thread is only permitted to do the following:
+</p>
+
+<ul>
+<li>Create the Group 1 and Group 2 threads
+<li>Provide any input (e.g., parameters) these threads require
+<li>Start the threads
+</ul>
+
+<p>
+All Group 2 threads must be created and started before any of the Group 1
+threads are created and started.
+Each Group 2 thread must match against each dictionary password hash as
+soon as that password hash has been computed.
+(This rules out a design where all the dictionary password hashes are
+computed before any of the users' password hashes are matched.)
+</p>
+
+<p>
+If a Group 2 thread finds a match, that thread must print the line of
+output for that user.
+(This rules out a design where a single thread, such as the main program
+thread, prints all the results.)
+</p>
+
+<p>
+The program must follow the thread programming patterns studied in class,
+must be designed using object-oriented design principles as appropriate,
+and must make use of reusable software components as appropriate.
+</p>
+
+<p>
+Each class or interface must include a Javadoc comment describing the
+overall interface.
+Each method within each class or interface must include a Javadoc comment
+describing the overall method, the arguments (if any), the return value
+(if any), and the exceptions thrown (if any).
+(See the original Java source files we have studied in class as examples
+of the style of Javadoc comment I'm looking for.
+Be sure to look at the original files, not just the simplified versions I
+show in the lecture notes; the original files are linked from the course
+<a href="/~wrc/courses/common/csci251/links.shtml">resources page</a>.)
+</p>
+
+<hr>
+
+<a name="files"></a>
+<h2>4. Supplied Files</h2>
+
+<p>
+For testing purposes, a set of sample input and output files are
+available to you.
+To retrieve them, on a CS Ubuntu<sup><a href="#ftn">&reg;</a></sup>
+system, execute the following command:
+</p>
+
+<blockquote><pre>
+get  wrc  cpds-1
+</pre></blockquote>
+
+<p>
+Each test will consist of the following files, where
+<code><em>N</em></code> is the sequence number of the test:
+</p>
+
+<table>
+
+<tr>
+  <td>&nbsp;</td>
+  <td><code>args.<em>N</em></code></td>
+  <td>&nbsp;</td>
+  <td>Command-line arguments for the test</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td><code>db.<em>N</em></code></td>
+  <td>&nbsp;</td>
+  <td>The password hash database for the test</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td><code>dict.<em>N</em></code></td>
+  <td>&nbsp;</td>
+  <td>The password dictionary for the test</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td><code>stdout.<em>N</em></code></td>
+  <td>&nbsp;</td>
+  <td>The standard output produced by the program</td>
+</tr>
+
+  <td>&nbsp;</td>
+  <td><code>stderr.<em>N</em></code></td>
+  <td>&nbsp;</td>
+  <td>The standard error output produced by the program</td>
+</tr>
+
+</table>
+
+<p>
+Other files will be copied along with the test files; their names and
+contents should be self-explanatory.
+</p>
+
+<hr>
+
+<a name="submit"></a>
+<h2>5. How to Submit your Solution</h2>
+
+<p>
+To submit your solution, on the CS Ubuntu systems, use this command:
+</p>
+
+<blockquote>
+<code>try  wrc-grd  cpds-1   </code>  <em>files</em>
+</blockquote>
+
+<p>
+where <em>files</em> are the names of all the <code>.java</code>
+files implementing your solution (one of which must be named
+<code>PasswordCrack.java</code>).
+You may also submit a <code>README</code> file if you wish to communicate
+additional information that I should know before grading your program.
+</p>
+
+<p>
+These tests may or may not match the sample test data I have provided,
+and you may not see the results from any or all of the tests.
+It is up to you to fully test your program before submitting it; do not
+assume that your program is correct just because it passes all the tests
+you see!
+</p>
+
+<p>
+The minimum acceptance test is that your code must be complete - that is,
+it must compile and link cleanly when submitted.
+Submissions <em>will not be accepted</em> if they fail to
+compile and link cleanly.
+(Warning messages from the compiler are acceptable, but not fatal errors.)
+</p>
+
+<hr>
+
+<a name="grading"></a>
+<h2>6. Grading</h2>
+
+<p>
+Your submission will be graded out of 50 points as follows:
+</p>
+
+<blockquote>
+<table border="1" cellpadding="3">
+
+<tr>
+ <th>Criterion</th><th>Value</th><th>Interpretation</th>
+</tr>
+
+<tr>
+ <td>Performance</td><td>35 points</td>
+ <td>How well your program's output meets the performance requirements
+described above</td>
+</tr>
+
+<tr>
+ <td>Design</td><td>15 points</td>
+ <td>How well your program meets the design requirements
+described above (including documentation)</td>
+</tr>
+
+</table>
+</blockquote>
+
+<hr>
+
+<a name="notes"></a>
+<h2>7. Notes</h2>
+
+<p>
+This is an individual assignment; you may not work together with anyone
+to produce your solution.
+You may re-use example code shown in class as well as derive your own
+code from it; if you do that, or if you obtain inspiration from another
+source (e.g., a web site, random people you meet in the hallway, etc.),
+you are expected to fully document the source of the inspiration, giving
+credit where credit is due.
+Failure to do so is considered to be plagiarism; see the
+<a href="/~wrc/courses/csci251/syllabus/">course syllabus</a> for
+a description of my academic conduct policies.
+</p>
+
+<p>
+Late submissions will be graded only if you requested an extension before
+the deadline for submitting the assignment.
+See the <a href="/~wrc/courses/csci251/syllabus/">course syllabus</a> for
+a description of the extension policy.
+</p>
+
+<p>
+The specification for output produced by your program is exact.
+Any deviation (e.g., extra spaces, debugging messages in the output,
+etc.) will be considered to be incorrect output.
+</p>
+
+<p>
+Refer to the example programs we have studied in class for examples of
+reasonable programming style, or to the coding style recommendations
+linked from the
+<a href="/~wrc/courses/csci251/syllabus/">course syllabus</a>.
+</p>
+
+</ul>
+
+<hr>
+<a name="ftn"></a>
+<em>
+Ubuntu<sup>&reg;</sup> is a registered trademark of Canonical Ltd.
+
+</em>
+
+<hr>
+
+</body>
+</html>
