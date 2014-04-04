@@ -14,8 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 /**
- * Hasher takes in a plaintext password and converts it into a byte array after using SHA-256 to hash. The byte array
- * is then converted into a hexadecimal string, and stored into the shared dictionary of hashed to plaintext passwords.
+ * Hasher takes in a plaintext password and converts it into a byte array after 
+ * using SHA-256 to hash. The byte array is then converted into a hexadecimal 
+ * string, and stored into the shared dictionary of hashed:plaintext passwords.
  */
 public class Hasher implements Runnable {
 
@@ -28,12 +29,17 @@ public class Hasher implements Runnable {
     /**
      * Constructor.
      * @param plaintextData password to hash.
-     * @param dictionaryOfPasswords collection of hashed passwords, along with their corresponding plaintext values.
-     * @param hashesDone semaphore that keeps track of the number of passwords that were hashed.
-     *                   Used along with the semaphore printPermits to allow/block threads from printing results.
+     * @param dictionaryOfPasswords collection of hashed passwords, along with 
+	 *                              their corresponding plaintext values.
+     * @param hashesDone semaphore that keeps track of the number of passwords 
+	 *                   that were hashed.
+     *                   Used along with the semaphore printPermits to 
+	 *                   allow/block threads from printing results.
      *                   Used to maintain order of task execution.
      */
-    public Hasher(String plaintextData, ConcurrentHashMap<String, String> dictionaryOfPasswords, Semaphore hashesDone) {
+    public Hasher(String plaintextData, 
+			ConcurrentHashMap<String, String> dictionaryOfPasswords, 
+			Semaphore hashesDone) {
         this.plaintextData = plaintextData;
         this.dictionaryOfPasswords = dictionaryOfPasswords;
         this.hashesDone = hashesDone;
@@ -79,7 +85,8 @@ public class Hasher implements Runnable {
     private String byteArrayToHexString(byte[] data) {
         StringBuilder hexString = new StringBuilder();
         for (byte piece : data) {
-            // Convert each byte to hex, while ANDing with 0xFF to get the least significant byte (masking).
+            // Convert each byte to hex, while ANDing with 0xFF to get the 
+			// least significant byte (masking).
             String hex = Integer.toHexString(0xFF & piece);
 
             // Check each byte for missing leading zeroes.
@@ -94,15 +101,16 @@ public class Hasher implements Runnable {
     /**
      * When a thread calls .start(), it runs the .run() method.
      *
-     * When this thread is started, it hashes the plaintext password using SHA-256 and adds it into the dictionary
-     * of hashed values to plaintext values.
+     * When this thread is started, it hashes the plaintext password using 
+	 * SHA-256 and adds it into the dictionary of hashed : plaintext values.
      */
     @Override
     public void run() {
         this.hashData = byteArrayToHexString(getHash(this.plaintextData));
         this.dictionaryOfPasswords.put(this.hashData, this.plaintextData);
 
-        // Update the semaphore by releasing one, which increases the number of available permits by one.
+        // Update the semaphore by releasing one, which increases the number of 
+		// available permits by one.
         this.hashesDone.release();
     }
 }
